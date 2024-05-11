@@ -38,6 +38,8 @@ class Parser {
         },
       };
 
+      console.log(yargsInstance);
+
       if (command.builder) {
         command.builder(yargsInstance);
       }

@@ -1,0 +1,12 @@
+{
+  "name": "parser",
+  "version": "1.0.0",
+  "description": "Command line argument parser",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jose Lopez Renteria",
+  "license": "ISC"
+}

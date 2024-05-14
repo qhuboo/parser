@@ -5,45 +5,74 @@ class Parser {
     this.argv = argv;
   }
 
-  command(cmd, desc, builder, handler) {
-    this.commands[cmd] = {
-      desc,
-      builder,
+  command(cmd, description, builder, handler) {
+    const commandConfig = {
+      cmd,
+      description,
+      options: {},
+      positionals: {},
       handler,
     };
-    builder(this);
+    this.commands[cmd] = commandConfig;
+
+    const yargs = {
+      option: (key, config) => {
+        this.option(key, config, cmd);
+        return yargs;
+      },
+      positional: (key, config) => {
+        this.positional(key, config, cmd);
+        return yargs;
+      },
+    };
+
+    builder(yargs);
+
     return this;
   }
 
-  options() {
-    console.log("This is the options method");
+  option(key, config, commandName) {
+    if (commandName) {
+      this.commands[commandName].options[key] = config;
+    } else {
+      this.globalOptions[key] = config;
+    }
     return this;
   }
 
-  positional() {
+  positional(key, config, commandName) {
+    if (commandName) {
+      this.commands[commandName].positionals[key] = config;
+    }
     return this;
   }
 
   parse() {
-    const [cmd, ...args] = this.argv.slice(2);
-    console.log(cmd);
-    console.log(args);
-  }
-
-  help() {
-    console.log("This is the help method");
+    console.log(this.commands.new);
   }
 }
 
-const parser1 = new Parser(process.argv);
-parser1
+const parser = new Parser();
+parser
   .command(
-    "new <note>",
-    "adds a new note",
-    (yargs) => console.log(yargs),
-    () => {
-      console.log("this is the handler");
+    "new",
+    "Create a new note",
+    (yargs) => {
+      yargs
+        .option("color", {
+          description: "Color of the note",
+          type: "string",
+          default: "yellow",
+        })
+        .positional("note", {
+          description: "Content of the note",
+          required: true,
+        });
+    },
+    (argv) => {
+      console.log(
+        `New note added with content: ${argv.note} and color: ${argv.color}`
+      );
     }
   )
-  .positional()
   .parse();

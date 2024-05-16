@@ -15,6 +15,7 @@ class Parser {
     };
     this.commands[cmd] = commandConfig;
 
+    // Create scoped context to pass into the builder function
     const yargs = {
       option: (key, config) => {
         this.option(key, config, cmd);
@@ -48,31 +49,87 @@ class Parser {
   }
 
   parse() {
-    console.log(this.commands.new);
+    let [cmd, ...args] = process.argv.slice(2);
+
+    // Extracting all the possible options
+    const possibleOptions = [];
+    args.forEach((arg) => {
+      if (arg.match(/--?[\w-]+/g)) {
+        possibleOptions.push(arg.replace("-", "").replace("-", ""));
+      }
+    });
+    // console.log(possibleOptions);
+
+    const options = {};
+    const positional = {};
+    for (const command in this.commands) {
+      // Check whether the command is valid, throw error if not
+      if (cmd === command.split(" ")[0]) {
+        cmd = this.commands[command].handler;
+
+        // Get all the valid options for the current command
+        const commandOptions = Object.keys(this.commands[command].options);
+        possibleOptions.forEach((possibleOption) => {
+          commandOptions.forEach((option) => {
+            if (
+              possibleOption === option ||
+              possibleOption === this.commands[command].options[option].alias
+            ) {
+              const alias = this.commands[command].options[option].alias;
+              const validOption = { [option]: true, [alias]: true };
+
+              if (
+                !options.hasOwnProperty([option]) &&
+                !options.hasOwnProperty([alias])
+              ) {
+                options[option] = true;
+                options[alias] = true;
+              }
+            }
+          });
+        });
+      } else {
+        throw Error(`Invalid Command: ${cmd}`);
+      }
+
+      // Extract all the required positional arguments (denoted with <>) from the command name
+      // and add add them to the positional array as the key and the content of args as the value
+      // in order. (e.g. If the command name contains two required positional arguments <source> and <destination>
+      // then the positional array will contain two items, source: args[0] and destination: args[1])
+      const matches = [...command.matchAll(/<([^>]+)>/g)].map(
+        (match) => match[1]
+      );
+      matches.forEach((match, index) => (positional[match] = args[index]));
+    }
+
+    this.argv = { ...options, ...positional };
+    cmd(this.argv);
   }
 }
 
-const parser = new Parser();
+const parser = new Parser(process.argv);
 parser
   .command(
-    "new",
-    "Create a new note",
+    "cp <source> <destination> [options]",
+    "Copy a file",
     (yargs) => {
       yargs
-        .option("color", {
-          description: "Color of the note",
+        .option("r", {
+          alias: "recursive",
+          description: "Recursively copy files, copy a directory",
           type: "string",
-          default: "yellow",
         })
-        .positional("note", {
-          description: "Content of the note",
+        .positional("source", {
+          description: "Source path",
+          required: true,
+        })
+        .positional("destination", {
+          description: "Destination path",
           required: true,
         });
     },
     (argv) => {
-      console.log(
-        `New note added with content: ${argv.note} and color: ${argv.color}`
-      );
+      console.log(argv);
     }
   )
   .parse();

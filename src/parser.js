@@ -93,7 +93,7 @@ class Parser {
       }
 
       // Extract all the required positional arguments (denoted with <>) from the command name
-      // and add add them to the positional array as the key and the content of args as the value
+      // and add add them to the positional object as the key and the content of args as the value
       // in order. (e.g. If the command name contains two required positional arguments <source> and <destination>
       // then the positional array will contain two items, source: args[0] and destination: args[1])
       const matches = [...command.matchAll(/<([^>]+)>/g)].map(
